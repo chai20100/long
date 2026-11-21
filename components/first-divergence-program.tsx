@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { localISO, monthsAgo } from "@/lib/boards";
 import type { ExecutionTrade } from "@/lib/first-divergence-strategy";
@@ -47,6 +47,16 @@ export function FirstDivergenceProgram() {
   const [error, setError] = useState("");
   const [missing, setMissing] = useState<MissingData[]>([]);
   const [result, setResult] = useState<ProgramResult | null>(null);
+
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const leader = query.get("leader");
+    const peerCodes = query.get("peers");
+    const theme = query.get("theme");
+    if (leader && /^\d{6}$/.test(leader)) setLeaderCode(leader);
+    if (peerCodes) setPeers(peerCodes);
+    if (theme) setThemeName(theme.slice(0, 30));
+  }, []);
 
   async function run(event: FormEvent) {
     event.preventDefault();
@@ -99,7 +109,7 @@ export function FirstDivergenceProgram() {
     <div className="app-shell">
       <header className="site-header"><div className="header-inner">
         <a className="brand" href="/" aria-label="返回行情看板"><span className="brand-mark"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M8 5v7m0 9v6M8 12h0v9H3v-9h5Zm16-7v8m0 10v4m0-14h0v10h-5V13h5ZM16 9v5m0 10v4m0-14h0v10h-5V14h5Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span className="brand-copy"><strong>多股日线</strong><small>KLINE BOARD</small></span></a>
-        <div className="header-actions"><span className="source-badge"><span className="source-dot" />BaoStock 5 分钟数据<span className="badge-divider" />D1 + R2</span><a className="strategy-nav-link" href="/leader-backtest">龙头回测</a><a className="strategy-nav-link" href="/">返回看板</a></div>
+        <div className="header-actions"><span className="source-badge"><span className="source-dot" />BaoStock 5 分钟数据<span className="badge-divider" />D1 + R2</span><a className="strategy-nav-link" href="/daily-strategy">每日扫描</a><a className="strategy-nav-link" href="/leader-backtest">龙头回测</a><a className="strategy-nav-link" href="/">返回看板</a></div>
       </div></header>
 
       <main className="dashboard execution-dashboard">
