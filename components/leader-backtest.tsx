@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { localISO, monthsAgo } from "@/lib/boards";
+import { MarketDataSync } from "@/components/market-data-sync";
 import {
   DEFAULT_LEADER_OPTIONS,
   type BacktestStats,
@@ -197,7 +198,7 @@ export function LeaderBacktest() {
             <span className="brand-copy"><strong>多股日线</strong><small>KLINE BOARD</small></span>
           </a>
           <div className="header-actions">
-            <span className="source-badge"><span className="source-dot" />东方财富数据<span className="badge-divider" />Cloudflare D1</span>
+            <span className="source-badge"><span className="source-dot" />东方财富 / BaoStock<span className="badge-divider" />D1 + R2</span>
             <a className="strategy-nav-link" href="/">返回行情看板</a>
           </div>
         </div>
@@ -259,6 +260,8 @@ export function LeaderBacktest() {
           )}
         </section>
 
+        <MarketDataSync />
+
         {error && <p className="backtest-error" role="alert">{error}</p>}
 
         {loading && <div className="backtest-loading"><span className="loading-spinner" /><strong>正在识别分歧与转强信号</strong><span>同时获取退出日行情，请稍候</span></div>}
@@ -303,7 +306,7 @@ export function LeaderBacktest() {
         )}
       </main>
 
-      <footer className="site-footer"><span>首封时间仅作板块同步转强代理 · 未模拟涨停排队与滑点 · 数据保存于 Cloudflare D1</span><span>历史回测不代表未来收益，不构成投资建议</span></footer>
+      <footer className="site-footer"><span>首封时间仅作板块同步转强代理 · 进度与索引保存于 D1 · 全市场行情压缩保存于 R2</span><span>历史回测不代表未来收益，不构成投资建议</span></footer>
     </div>
   );
 }

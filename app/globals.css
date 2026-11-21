@@ -2917,3 +2917,256 @@ input:focus-visible {
     line-height: 1.7;
   }
 }
+
+
+.market-sync-section {
+  margin-top: 14px;
+  padding: 21px 22px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(23, 34, 51, .025);
+}
+
+.market-sync-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.market-sync-heading .eyebrow {
+  margin-bottom: 6px;
+  font-size: 8px;
+}
+
+.market-sync-heading h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.market-sync-heading p:last-child {
+  margin: 6px 0 0;
+  color: #929caa;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.market-sync-state {
+  padding: 5px 9px;
+  border-radius: 6px;
+  color: #7c8798;
+  background: #f1f3f6;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.market-sync-state.is-running {
+  color: #a65143;
+  background: #fff0ec;
+}
+
+.market-sync-range {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 2fr repeat(3, 1fr);
+  overflow: hidden;
+  border: 1px solid #e8ebef;
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+.market-sync-range > div {
+  min-width: 0;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.market-sync-range > div + div {
+  border-left: 1px solid #e8ebef;
+}
+
+.market-sync-range span {
+  color: #98a2b1;
+  font-size: 8px;
+}
+
+.market-sync-range strong {
+  overflow: hidden;
+  color: #4a586b;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market-sync-progress {
+  margin-top: 16px;
+}
+
+.market-sync-progress-labels {
+  margin-bottom: 7px;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  color: #8792a1;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.market-sync-progress-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #edf0f3;
+}
+
+.market-sync-progress-track > span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width .2s;
+}
+
+.market-sync-actions {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.market-sync-actions button {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #dfe3e9;
+  border-radius: 7px;
+  color: #657184;
+  background: #fff;
+  font-size: 10px;
+}
+
+.market-sync-actions button:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: #b8c0cb;
+}
+
+.market-sync-actions button:disabled {
+  cursor: default;
+  opacity: .5;
+}
+
+.market-sync-actions .market-sync-primary {
+  border-color: var(--ink);
+  color: #fff;
+  background: var(--ink);
+}
+
+.market-sync-actions .market-sync-primary:hover:not(:disabled) {
+  color: #fff;
+  background: #2a3950;
+}
+
+.market-sync-current,
+.market-sync-message {
+  margin: 13px 0 0;
+  color: #667385;
+  font-size: 10px;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.market-sync-current.has-error,
+.market-sync-message {
+  color: #b15b4e;
+}
+
+.market-sync-errors {
+  margin-top: 13px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  color: #9a5d52;
+  background: #fff7f5;
+  font-size: 9px;
+}
+
+.market-sync-errors summary {
+  cursor: pointer;
+}
+
+.market-sync-errors ul {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.market-sync-errors li {
+  padding: 7px 0;
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  gap: 10px;
+  border-top: 1px solid #f1dfda;
+  line-height: 1.5;
+}
+
+.market-sync-errors li span {
+  overflow-wrap: anywhere;
+}
+
+.market-sync-errors li small {
+  white-space: nowrap;
+}
+
+.market-sync-notice {
+  margin: 15px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid #eff1f4;
+  color: #a0a8b4;
+  font-size: 9px;
+  line-height: 1.7;
+}
+
+@media (max-width: 760px) {
+  .market-sync-range {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .market-sync-range > div:nth-child(3) {
+    border-left: 0;
+  }
+
+  .market-sync-range > div:nth-child(n + 3) {
+    border-top: 1px solid #e8ebef;
+  }
+
+  .market-sync-errors li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 640px) {
+  .market-sync-section {
+    padding: 17px 14px;
+  }
+
+  .market-sync-heading {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .market-sync-progress-labels {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .market-sync-actions button {
+    flex: 1;
+    white-space: nowrap;
+  }
+}

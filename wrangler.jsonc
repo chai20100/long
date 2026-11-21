@@ -17,6 +17,12 @@
       "migrations_dir": "migrations/boards"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "MARKET_DATA",
+      "bucket_name": "kline-market-data"
+    }
+  ],
   "vars": {
     "AUTH_EMAIL": "chai20100@gmail.com"
   },
