@@ -2,6 +2,7 @@ import { fetchTradingDates, ingestLeaderDate, loadLeaderEvents, type LeaderDatab
 import { isValidISODate, marketFor } from "@/lib/stocks";
 import type { DailyBar } from "@/lib/first-divergence-strategy";
 import { scanDailyStrategy, type DailyScanOptions } from "@/lib/daily-strategy-rules";
+import { withBaostock } from "@/lib/baostock";
 
 const DEFAULT_OPTIONS: DailyScanOptions = {
   minLeaderBoards: 2,
@@ -24,55 +25,107 @@ function todayShanghai(): string {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
+async function tradingCalendar(start: string, end: string) {
+  try {
+    const dates = await withBaostock((client) => client.listTradingDates(start, end));
+    if (dates.length) return { dates, source: "baostock" };
+  } catch {
+    const dates = await fetchTradingDates(start, end);
+    return { dates, source: "eastmoney" };
+  }
+  return { dates: await fetchTradingDates(start, end), source: "eastmoney" };
+}
+
 async function fetchStockDaily(code: string, start: string, end: string): Promise<DailyBar[]> {
-  const query = new URLSearchParams({
-    secid: marketFor(code).secid,
-    klt: "101",
-    fqt: "0",
-    beg: start.replaceAll("-", ""),
-    end: end.replaceAll("-", ""),
-    fields1: "f1,f2,f3,f4,f5,f6",
-    fields2: "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
-  });
-  const response = await fetch(`https://push2his.eastmoney.com/api/qt/stock/kline/get?${query}`, {
-    headers: { Accept: "application/json", "User-Agent": "Mozilla/5.0 (compatible; KlineBoard/1.0)" },
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!response.ok) throw new Error(`东方财富日线 HTTP ${response.status}`);
-  const body = await response.json() as { data?: { klines?: string[] } | null };
-  return (body.data?.klines ?? []).map((line) => {
-    const fields = line.split(",");
-    return {
-      date: fields[0],
-      open: Number(fields[1]) || 0,
-      close: Number(fields[2]) || 0,
-      high: Number(fields[3]) || 0,
-      low: Number(fields[4]) || 0,
-      volume: Number(fields[5]) || 0,
-      amount: Number(fields[6]) || 0,
-    };
-  });
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const query = new URLSearchParams({
+        secid: marketFor(code).secid,
+        klt: "101",
+        fqt: "0",
+        beg: start.replaceAll("-", ""),
+        end: end.replaceAll("-", ""),
+        fields1: "f1,f2,f3,f4,f5,f6",
+        fields2: "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
+      });
+      const host = attempt === 1 ? "push2.eastmoney.com" : "push2his.eastmoney.com";
+      const response = await fetch(`https://${host}/api/qt/stock/kline/get?${query}`, {
+        headers: {
+          Accept: "application/json",
+          Referer: "https://quote.eastmoney.com/",
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36",
+        },
+        cache: "no-store",
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!response.ok) throw new Error(`东方财富日线 HTTP ${response.status}`);
+      const body = await response.json() as { data?: { klines?: string[] } | null };
+      return (body.data?.klines ?? []).map((line) => {
+        const fields = line.split(",");
+        return {
+          date: fields[0],
+          open: Number(fields[1]) || 0,
+          close: Number(fields[2]) || 0,
+          high: Number(fields[3]) || 0,
+          low: Number(fields[4]) || 0,
+          volume: Number(fields[5]) || 0,
+          amount: Number(fields[6]) || 0,
+        };
+      });
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 400 * 2 ** attempt));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("东方财富日线请求失败");
 }
 
 async function dailyHistoryForLeaders(codes: string[], start: string, end: string) {
   const dailyByCode: Record<string, DailyBar[]> = {};
-  const errors: { code: string; error: string }[] = [];
+  const failed = new Map<string, { code: string; error: string }>();
   for (let offset = 0; offset < codes.length; offset += 3) {
     await Promise.all(codes.slice(offset, offset + 3).map(async (code) => {
       try {
         dailyByCode[code] = await fetchStockDaily(code, start, end);
       } catch (error) {
-        errors.push({ code, error: error instanceof Error ? error.message : String(error) });
+        failed.set(code, { code, error: error instanceof Error ? error.message : String(error) });
       }
     }));
   }
-  return { dailyByCode, errors };
+  const fallbackCodes: string[] = [];
+  if (failed.size) {
+    try {
+      await withBaostock(async (client) => {
+        for (const code of failed.keys()) {
+          const baoCode = `${marketFor(code).market.toLowerCase()}.${code}`;
+          const result = await client.queryKline(baoCode, start, end, "d");
+          const fields = Object.fromEntries(result.fields.map((field, index) => [field, index]));
+          dailyByCode[code] = result.rows.map((row) => ({
+            date: row[fields.date],
+            open: Number(row[fields.open]) || 0,
+            close: Number(row[fields.close]) || 0,
+            high: Number(row[fields.high]) || 0,
+            low: Number(row[fields.low]) || 0,
+            volume: Number(row[fields.volume]) || 0,
+            amount: Number(row[fields.amount]) || 0,
+          }));
+          fallbackCodes.push(code);
+          failed.delete(code);
+        }
+      });
+    } catch {
+      return { dailyByCode, errors: [...failed.values()], fallbackCodes };
+    }
+  }
+  return { dailyByCode, errors: [...failed.values()], fallbackCodes };
 }
 
 export async function runDailyCloseScan(db: LeaderDatabase, requestedDate?: string) {
   const requested = requestedDate || todayShanghai();
   if (!isValidISODate(requested)) throw new Error("扫描日期无效");
-  const calendar = await fetchTradingDates(shiftDate(requested, -25), requested);
+  const calendarResult = await tradingCalendar(shiftDate(requested, -25), requested);
+  const calendar = calendarResult.dates;
   const scanDate = calendar.at(-1);
   if (!scanDate) throw new Error("所选日期之前没有可用交易日");
   const scanIndex = calendar.indexOf(scanDate);
@@ -88,7 +141,7 @@ export async function runDailyCloseScan(db: LeaderDatabase, requestedDate?: stri
   }
   if (syncedDates.length) events = await loadLeaderEvents(db, requiredDates[0], scanDate);
   const preliminary = scanDailyStrategy(events, {}, calendar, scanDate, DEFAULT_OPTIONS);
-  const { dailyByCode, errors } = await dailyHistoryForLeaders(
+  const { dailyByCode, errors, fallbackCodes } = await dailyHistoryForLeaders(
     preliminary.requiredCodes,
     shiftDate(scanDate, -15),
     scanDate,
@@ -106,6 +159,8 @@ export async function runDailyCloseScan(db: LeaderDatabase, requestedDate?: stri
       ...result.diagnostics,
       dataErrors: [...result.diagnostics.dataErrors, ...errors],
       autoSyncedDates: syncedDates,
+      calendarSource: calendarResult.source,
+      dailyFallbackCodes: fallbackCodes,
     },
     methodology: {
       candidate: "前一交易日已确认的主线龙头，在扫描日首次放量炸板或收跌断板，进入下一交易日弱转强候选。",

@@ -190,6 +190,24 @@ export class BaostockClient {
     throw new Error(`${code} 行情分页超过安全上限`);
   }
 
+  async listTradingDates(start: string, end: string): Promise<string[]> {
+    const dates: string[] = [];
+    for (let page = 1; page <= 20; page += 1) {
+      const body = ["query_trade_dates", "anonymous", page, PAGE_SIZE, start, end].join(SEPARATOR);
+      const response = (await this.request("33", body)).split(SEPARATOR);
+      if (response[0] !== "0") throw new Error(`BaoStock 交易日历查询失败：${response[1] ?? response[0]}`);
+      const rows = records(response, 6);
+      const fields = response[9]?.split(",").map((field) => field.trim()) ?? [];
+      const dateIndex = fields.indexOf("calendar_date");
+      const tradingIndex = fields.indexOf("is_trading_day");
+      for (const row of rows) {
+        if (row[tradingIndex] === "1" && row[dateIndex]) dates.push(row[dateIndex]);
+      }
+      if (rows.length < PAGE_SIZE) return dates;
+    }
+    throw new Error("BaoStock 交易日历分页超过安全上限");
+  }
+
   async listStocks(): Promise<BaostockStock[]> {
     const all: BaostockStock[] = [];
     let fields: string[] = [];

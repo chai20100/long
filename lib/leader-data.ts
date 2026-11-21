@@ -102,25 +102,34 @@ function compactDate(date: string): string {
   return date.replaceAll("-", "");
 }
 
-async function fetchJson(url: string, attempts = 2): Promise<unknown> {
+async function fetchJson(url: string, attempts = 4): Promise<unknown> {
   let lastError: unknown;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const requestUrl = new URL(url);
+    if (attempt % 2 === 1 && requestUrl.hostname === "push2his.eastmoney.com") {
+      requestUrl.hostname = "push2.eastmoney.com";
+    }
+    if (attempt > 0) requestUrl.searchParams.set("_retry", String(Date.now()));
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15_000);
     try {
-      const response = await fetch(url, {
+      const response = await fetch(requestUrl, {
         headers: {
           Accept: "application/json, text/plain, */*",
           "Accept-Language": "zh-CN,zh;q=0.9",
-          "User-Agent": "Mozilla/5.0 (compatible; KlineBoard/1.0)",
+          Referer: "https://quote.eastmoney.com/",
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
         },
+        cache: "no-store",
         signal: controller.signal,
       });
       if (!response.ok) throw new Error(`东方财富接口返回 HTTP ${response.status}`);
       return await response.json();
     } catch (error) {
       lastError = error;
-      if (attempt + 1 < attempts) await new Promise((resolve) => setTimeout(resolve, 350));
+      if (attempt + 1 < attempts) {
+        await new Promise((resolve) => setTimeout(resolve, 400 * 2 ** attempt));
+      }
     } finally {
       clearTimeout(timeout);
     }
