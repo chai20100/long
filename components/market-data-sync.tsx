@@ -151,7 +151,7 @@ export function MarketDataSync() {
   const pending = (counts?.pending ?? 0) + (counts?.running ?? 0);
 
   return (
-    <section className="market-sync-section">
+    <section className="market-sync-section" id="market-data-sync">
       <div className="market-sync-heading">
         <div>
           <p className="eyebrow">BAOSTOCK · SHANGHAI / SHENZHEN</p>

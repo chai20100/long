@@ -268,6 +268,7 @@ export function StockDashboard() {
           </a>
           <div className="header-actions">
             <div className="source-badge"><span className="source-dot" />东方财富数据<span className="badge-divider" />前复权</div>
+            <a className="strategy-nav-link" href="/first-divergence">弱转强程序</a>
             <a className="strategy-nav-link" href="/leader-backtest">龙头回测</a>
             <button
               className="logout-button"

@@ -199,6 +199,7 @@ export function LeaderBacktest() {
           </a>
           <div className="header-actions">
             <span className="source-badge"><span className="source-dot" />东方财富 / BaoStock<span className="badge-divider" />D1 + R2</span>
+            <a className="strategy-nav-link" href="/first-divergence">弱转强程序</a>
             <a className="strategy-nav-link" href="/">返回行情看板</a>
           </div>
         </div>
