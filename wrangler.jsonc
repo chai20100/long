@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "a-share-kline-board",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kline-board-db",
+      "database_id": "cd574676-f7e5-4a2e-98c6-03a9c241df29",
+      "migrations_dir": "migrations/boards"
+    }
+  ],
+  "vars": {
+    "AUTH_EMAIL": "chai20100@gmail.com"
+  },
+  "routes": [
+    {
+      "pattern": "long.tobestai.com",
+      "custom_domain": true
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
